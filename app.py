@@ -13,7 +13,7 @@ import threading
 # --- Configuração Inicial ---
 
 senha = st.text_input("Digite a senha:", type="password")
-if senha != "SUA_SENHA":
+if senha != "marcos":
     st.error("Acesso negado.")
     st.stop()
 
