@@ -12,6 +12,11 @@ import threading
 
 # --- Configuração Inicial ---
 
+senha = st.text_input("Digite a senha:", type="password")
+if senha != "SUA_SENHA":
+    st.error("Acesso negado.")
+    st.stop()
+
 # Configuração do logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
