@@ -127,8 +127,22 @@ def ordenar_empresas(empresas: list[str]) -> list[str]:
     resto = sorted([e for e in empresas if e not in principais_em_ia])
     return top + resto
 
+# --- AJUSTE APLICADO AQUI ---
+def clean_model_name(name: str) -> str:
+    """Remove o prefixo 'Empresa: ' do nome do modelo para uma exibição mais limpa."""
+    if ':' in name:
+        # Pega a parte da string após o primeiro ':' e remove espaços em branco
+        return name.split(':', 1)[1].strip()
+    return name
+
 # Carregamento e Mapeamento de Modelos
 FREE_MODELS, PAID_MODELS = load_models_from_file()
+
+# Aplica a limpeza dos nomes em todas as listas de modelos carregadas
+for model_list in [FREE_MODELS, PAID_MODELS]:
+    for model in model_list:
+        model['name'] = clean_model_name(model['name'])
+
 ALL_MODELS = FREE_MODELS + PAID_MODELS
 MODEL_NAME_MAP = {model['id']: model['name'] for model in ALL_MODELS}
 MODEL_ID_MAP = {model['name']: model['id'] for model in ALL_MODELS}
@@ -448,6 +462,7 @@ for message in st.session_state.messages:
             for i, (model_id, response_text) in enumerate(content.items()):
                 with cols[i]:
                     with st.chat_message(name=MODEL_NAME_MAP.get(model_id, "Bot"), avatar="🤖"):
+                        # O nome do modelo aqui já estará limpo, pois vem do MODEL_NAME_MAP
                         st.subheader(f"Resposta de `{MODEL_NAME_MAP.get(model_id)}`")
                         st.markdown(response_text)
         else:
@@ -516,3 +531,4 @@ if st.session_state.messages and st.session_state.messages[-1]['role'] == 'user'
         st.session_state.web_search_enabled = False
 
     st.rerun()
+
