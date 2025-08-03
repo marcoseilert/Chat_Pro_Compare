@@ -31,18 +31,20 @@ MODELS_FILE = Path("models_config.json")
 
 def get_user_id() -> str | None:
     """
-    Retorna o email do usuário logado no Streamlit.
-    Retorna None se o usuário não estiver logado (rodando localmente sem login).
+    Retorna o email do usuário logado no Streamlit de forma segura.
+    Verifica st.user (novo) e st.experimental_user (antigo) para compatibilidade.
     """
     try:
-        # st.experimental_user está obsoleto, mas é um fallback. st.user é o preferido.
-        if hasattr(st, 'user') and st.user:
+        # A forma moderna e preferida
+        if hasattr(st, 'user') and st.user and hasattr(st.user, 'email'):
             return st.user.email
-        elif hasattr(st, 'experimental_user') and st.experimental_user:
+        # Fallback para versões mais antigas
+        elif hasattr(st, 'experimental_user') and st.experimental_user and hasattr(st.experimental_user, 'email'):
             return st.experimental_user.email
         return None
     except Exception:
         return None
+
 
 def get_user_specific_dir(user_id: str) -> Path:
     """Cria e retorna um diretório seguro para o ID do usuário."""
@@ -88,7 +90,7 @@ def load_api_key(user_id: str) -> str | None:
     return None
 
 
-# --- Constantes e Gerenciamento de Modelos (sem alterações significativas) ---
+# --- Constantes e Gerenciamento de Modelos (sem alterações) ---
 def get_initial_models():
     """Retorna uma estrutura de modelos padrão se o arquivo não existir."""
     initial_free = [
@@ -235,7 +237,6 @@ def initialize_session_state(user_id: str | None):
     if 'selected_model_ids' not in st.session_state:
         st.session_state.selected_model_ids = [DEFAULT_MODEL_ID] if DEFAULT_MODEL_ID else []
     if 'api_key' not in st.session_state:
-        # Tenta carregar a chave salva se o usuário estiver logado
         st.session_state.api_key = load_api_key(user_id) if user_id else ""
     if 'confirm_delete_id' not in st.session_state: st.session_state.confirm_delete_id = None
     if 'show_free_models' not in st.session_state: st.session_state.show_free_models = True
@@ -255,7 +256,7 @@ def call_openrouter_api(model_id: str, api_key: str, conversation_history: list,
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://share.streamlit.io", # Referer genérico para apps deployados
+        "HTTP-Referer": "https://share.streamlit.io",
         "X-Title": "Streamlit Chat Pro Comparador"
     }
     
@@ -267,7 +268,6 @@ def call_openrouter_api(model_id: str, api_key: str, conversation_history: list,
         if role == "user":
             api_messages.append({"role": "user", "content": content})
         elif role == "assistant":
-            # Pega a primeira resposta do dicionário para manter o contexto simples
             if isinstance(content, dict):
                 first_response = next(iter(content.values()), None)
                 if first_response:
@@ -394,11 +394,29 @@ initialize_session_state(USER_ID)
 # --- Barra Lateral (Sidebar) ---
 with st.sidebar:
     st.header("⚖️ Comparador de Modelos")
+    
+    # --- NOVO: SEÇÃO DE DEBUG DE AUTENTICAÇÃO ---
+    with st.expander("🔍 Status da Autenticação (Debug)"):
+        st.write("Esta seção ajuda a diagnosticar problemas de login.")
+        try:
+            st.write("Objeto `st.user` recebido:")
+            # Mostra o objeto de usuário que o Streamlit está fornecendo ao script
+            st.json(st.user, expanded=False) 
+        except Exception as e:
+            st.error(f"Não foi possível acessar st.user: {e}")
+        
+        st.write("ID de Usuário detectado (email):")
+        st.info(f"`{USER_ID}`" if USER_ID else "`None` (Não detectado)")
 
+    st.divider()
+
+    # Lógica de exibição de status baseada no USER_ID
     if USER_ID:
         st.success(f"Logado como: **{USER_ID}**")
     else:
-        st.info("Você está em modo anônimo. Faça login no Streamlit para salvar suas conversas.")
+        st.warning("Você está em modo anônimo.")
+        st.caption("Faça login no Streamlit e atualize a página para salvar suas conversas.")
+
 
     if st.button("Nova Conversa", use_container_width=True):
         st.session_state.conversation_id = str(uuid.uuid4())
@@ -458,7 +476,7 @@ with st.sidebar:
 
     with st.expander("📂 Conversas Salvas", expanded=True):
         if not USER_ID:
-            st.caption("Faça login para ver suas conversas salvas.")
+            st.caption("Faça login para ver e salvar conversas.")
         else:
             conversations = load_conversations_metadata(USER_ID)
             if not conversations:
@@ -522,7 +540,7 @@ with st.sidebar:
         if st.button("Salvar Chave", use_container_width=True):
             save_api_key(USER_ID, st.session_state.api_key)
             st.success("Chave de API salva para este usuário!")
-        st.caption("Sua chave será armazenada no servidor. Use por sua conta e risco.")
+        st.caption("Sua chave será armazenada no servidor.")
 
     if not st.session_state.api_key:
         st.warning("⚠️ Insira sua chave API para usar o chat.")
@@ -608,7 +626,6 @@ if st.session_state.messages and st.session_state.messages[-1]['role'] == 'user'
 
     st.session_state.messages.append({"role": "assistant", "content": ordered_responses})
     
-    # Salva a conversa (a função interna verifica se o usuário está logado)
     save_conversation(
         USER_ID,
         st.session_state.conversation_id, 
