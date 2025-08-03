@@ -7,15 +7,10 @@ import requests
 from pathlib import Path
 import logging
 import json
-import time
+import re
 import threading
 
 # --- Configuração Inicial ---
-
-senha = st.text_input("Digite a senha:", type="password")
-if senha != "marcos":
-    st.error("Acesso negado.")
-    st.stop()
 
 # Configuração do logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -28,16 +23,78 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Constantes e Gerenciamento de Modelos ---
-CONVERSATIONS_DIR = Path("conversations")
-CONVERSATIONS_DIR.mkdir(exist_ok=True)
+# --- Gerenciamento de Usuário e Diretórios ---
+
+BASE_CONVERSATIONS_DIR = Path("user_conversations")
+BASE_CONVERSATIONS_DIR.mkdir(exist_ok=True)
 MODELS_FILE = Path("models_config.json")
 
+def get_user_id() -> str | None:
+    """
+    Retorna o email do usuário logado no Streamlit.
+    Retorna None se o usuário não estiver logado (rodando localmente sem login).
+    """
+    try:
+        # st.experimental_user está obsoleto, mas é um fallback. st.user é o preferido.
+        if hasattr(st, 'user') and st.user:
+            return st.user.email
+        elif hasattr(st, 'experimental_user') and st.experimental_user:
+            return st.experimental_user.email
+        return None
+    except Exception:
+        return None
+
+def get_user_specific_dir(user_id: str) -> Path:
+    """Cria e retorna um diretório seguro para o ID do usuário."""
+    if not user_id:
+        raise ValueError("User ID não pode ser vazio.")
+    
+    # Sanitiza o email para criar um nome de diretório válido
+    sanitized_id = re.sub(r'[^a-zA-Z0-9_.-]', '_', user_id)
+    user_dir = BASE_CONVERSATIONS_DIR / sanitized_id
+    user_dir.mkdir(exist_ok=True)
+    return user_dir
+
+# --- Gerenciamento da Chave de API por Usuário ---
+
+def save_api_key(user_id: str, api_key: str):
+    """Salva a chave de API de forma segura no diretório do usuário."""
+    if not user_id or not api_key:
+        return
+    try:
+        user_dir = get_user_specific_dir(user_id)
+        key_file = user_dir / ".api_key_store"
+        with open(key_file, 'w') as f:
+            json.dump({"api_key": api_key}, f)
+        logging.info(f"Chave de API salva para o usuário {user_id}.")
+    except Exception as e:
+        logging.error(f"Falha ao salvar a chave de API para {user_id}: {e}")
+        st.error("Não foi possível salvar a chave de API.")
+
+def load_api_key(user_id: str) -> str | None:
+    """Carrega a chave de API do arquivo do usuário, se existir."""
+    if not user_id:
+        return None
+    try:
+        user_dir = get_user_specific_dir(user_id)
+        key_file = user_dir / ".api_key_store"
+        if key_file.exists():
+            with open(key_file, 'r') as f:
+                data = json.load(f)
+                logging.info(f"Chave de API carregada para o usuário {user_id}.")
+                return data.get("api_key")
+    except Exception as e:
+        logging.error(f"Falha ao carregar a chave de API para {user_id}: {e}")
+    return None
+
+
+# --- Constantes e Gerenciamento de Modelos (sem alterações significativas) ---
 def get_initial_models():
     """Retorna uma estrutura de modelos padrão se o arquivo não existir."""
     initial_free = [
-        {'id': 'google/gemini-2.0-flash-exp:free', 'name': 'Google: Gemini 2.0 Flash Exp (Free)', 'company': 'Google'},
-        {'id': 'deepseek/deepseek-chat-v3-0324:free', 'name': 'Deepseek: Deepseek Chat V3 0324 (Free)', 'company': 'Deepseek'},
+        {'id': 'google/gemini-flash-1.5', 'name': 'Google: Gemini Flash 1.5', 'company': 'Google'},
+        {'id': 'meta-llama/llama-3-8b-instruct:free', 'name': 'Meta: Llama 3 8B Instruct (Free)', 'company': 'Meta'},
+        {'id': 'microsoft/wizardlm-2-8x22b', 'name': 'Microsoft: WizardLM-2 8x22B', 'company': 'Microsoft'},
         {'id': 'openai/gpt-4o-mini', 'name': 'OpenAI: GPT-4o Mini', 'company': 'OpenAI'}
     ]
     initial_paid = [
@@ -127,18 +184,15 @@ def ordenar_empresas(empresas: list[str]) -> list[str]:
     resto = sorted([e for e in empresas if e not in principais_em_ia])
     return top + resto
 
-# --- AJUSTE APLICADO AQUI ---
 def clean_model_name(name: str) -> str:
     """Remove o prefixo 'Empresa: ' do nome do modelo para uma exibição mais limpa."""
     if ':' in name:
-        # Pega a parte da string após o primeiro ':' e remove espaços em branco
         return name.split(':', 1)[1].strip()
     return name
 
 # Carregamento e Mapeamento de Modelos
 FREE_MODELS, PAID_MODELS = load_models_from_file()
 
-# Aplica a limpeza dos nomes em todas as listas de modelos carregadas
 for model_list in [FREE_MODELS, PAID_MODELS]:
     for model in model_list:
         model['name'] = clean_model_name(model['name'])
@@ -148,7 +202,7 @@ MODEL_NAME_MAP = {model['id']: model['name'] for model in ALL_MODELS}
 MODEL_ID_MAP = {model['name']: model['id'] for model in ALL_MODELS}
 ALL_COMPANIES = ordenar_empresas(list(set(model['company'] for model in ALL_MODELS)))
 
-DEFAULT_MODEL_ID = "google/gemini-2.0-flash-exp:free"
+DEFAULT_MODEL_ID = "google/gemini-flash-1.5"
 if not any(m['id'] == DEFAULT_MODEL_ID for m in ALL_MODELS):
     DEFAULT_MODEL_ID = ALL_MODELS[0]['id'] if ALL_MODELS else None
 
@@ -174,13 +228,15 @@ st.markdown("""
 
 # --- Funções de Sessão e API ---
 
-def initialize_session_state():
+def initialize_session_state(user_id: str | None):
     """Inicializa as variáveis necessárias no estado da sessão."""
     if 'conversation_id' not in st.session_state: st.session_state.conversation_id = str(uuid.uuid4())
     if 'messages' not in st.session_state: st.session_state.messages = []
     if 'selected_model_ids' not in st.session_state:
         st.session_state.selected_model_ids = [DEFAULT_MODEL_ID] if DEFAULT_MODEL_ID else []
-    if 'api_key' not in st.session_state: st.session_state.api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    if 'api_key' not in st.session_state:
+        # Tenta carregar a chave salva se o usuário estiver logado
+        st.session_state.api_key = load_api_key(user_id) if user_id else ""
     if 'confirm_delete_id' not in st.session_state: st.session_state.confirm_delete_id = None
     if 'show_free_models' not in st.session_state: st.session_state.show_free_models = True
     if 'show_paid_models' not in st.session_state: st.session_state.show_paid_models = True
@@ -199,7 +255,7 @@ def call_openrouter_api(model_id: str, api_key: str, conversation_history: list,
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:8501",
+        "HTTP-Referer": "https://share.streamlit.io", # Referer genérico para apps deployados
         "X-Title": "Streamlit Chat Pro Comparador"
     }
     
@@ -211,6 +267,7 @@ def call_openrouter_api(model_id: str, api_key: str, conversation_history: list,
         if role == "user":
             api_messages.append({"role": "user", "content": content})
         elif role == "assistant":
+            # Pega a primeira resposta do dicionário para manter o contexto simples
             if isinstance(content, dict):
                 first_response = next(iter(content.values()), None)
                 if first_response:
@@ -239,47 +296,61 @@ def call_openrouter_api(model_id: str, api_key: str, conversation_history: list,
         logging.exception(f"Erro inesperado na API ({effective_model_id}): {e}")
         return f"Erro inesperado: {e}"
 
-# --- Funções de Conversa (Atualizadas) ---
+# --- Funções de Conversa (Atualizadas para Multi-usuário) ---
 
-def save_conversation(conversation_id: str, messages: list, model_ids: list) -> str:
-    """Salva a conversa, agora com múltiplos IDs de modelo."""
-    if not messages: return ""
+def save_conversation(user_id: str | None, conversation_id: str, messages: list, model_ids: list):
+    """Salva a conversa apenas se houver um user_id (usuário logado)."""
+    if not user_id:
+        logging.info("Usuário não logado. Conversa não será salva.")
+        return
+    if not messages: return
+
     try:
+        user_dir = get_user_specific_dir(user_id)
+        filename = user_dir / f"{conversation_id}.parquet"
+        
         df = pd.DataFrame(messages)
         if 'content' in df.columns:
             df['content'] = df['content'].apply(lambda x: json.dumps(x) if isinstance(x, dict) else x)
         df['timestamp'] = datetime.now().isoformat()
-        df['conversation_id'] = conversation_id
         df['model_ids'] = json.dumps(model_ids)
-        filename = CONVERSATIONS_DIR / f"{conversation_id}.parquet"
+        
         df.to_parquet(filename, index=False)
-        logging.info(f"Conversa {conversation_id} salva com modelos {model_ids}.")
-        return str(filename)
+        logging.info(f"Conversa {conversation_id} salva para o usuário {user_id}.")
     except Exception as e:
         st.error(f"Erro ao salvar a conversa: {e}")
-        return ""
 
-def load_conversation_messages(conversation_id: str) -> tuple[list, list | None]:
-    """Carrega mensagens e a lista de IDs de modelo."""
-    filename = CONVERSATIONS_DIR / f"{conversation_id}.parquet"
-    if not filename.exists(): return [], None
+def load_conversation_messages(user_id: str | None, conversation_id: str) -> tuple[list, list | None]:
+    """Carrega mensagens da conversa de um usuário específico."""
+    if not user_id:
+        return [], None
+
     try:
+        user_dir = get_user_specific_dir(user_id)
+        filename = user_dir / f"{conversation_id}.parquet"
+        if not filename.exists(): return [], None
+
         df = pd.read_parquet(filename)
         if 'content' in df.columns:
             df['content'] = df['content'].apply(lambda x: json.loads(x) if isinstance(x, str) and x.startswith('{') else x)
         messages = df[['role', 'content']].to_dict('records')
         model_ids_json = df['model_ids'].iloc[0] if 'model_ids' in df.columns and not df.empty else '[]'
         model_ids = json.loads(model_ids_json)
-        logging.info(f"Conversa {conversation_id} carregada com modelos {model_ids}.")
+        
+        logging.info(f"Conversa {conversation_id} carregada para o usuário {user_id}.")
         return messages, model_ids
     except Exception as e:
         st.error(f"Erro ao ler arquivo da conversa: {e}")
         return [], None
 
-def delete_conversation(conversation_id: str):
-    """Exclui o arquivo de uma conversa."""
-    filename = CONVERSATIONS_DIR / f"{conversation_id}.parquet"
+def delete_conversation(user_id: str | None, conversation_id: str):
+    """Exclui o arquivo de uma conversa de um usuário específico."""
+    if not user_id:
+        return
+
     try:
+        user_dir = get_user_specific_dir(user_id)
+        filename = user_dir / f"{conversation_id}.parquet"
         if filename.exists():
             filename.unlink()
             st.toast(f"Conversa excluída.", icon="🗑️")
@@ -291,34 +362,43 @@ def delete_conversation(conversation_id: str):
     except Exception as e:
         st.error(f"Erro ao excluir conversa: {e}")
 
-def load_conversations_metadata() -> list:
-    """Carrega metadados das conversas salvas para exibição na sidebar."""
+def load_conversations_metadata(user_id: str | None) -> list:
+    """Carrega metadados das conversas salvas para um usuário específico."""
+    if not user_id:
+        return []
+
     conversations = []
-    for file in CONVERSATIONS_DIR.glob('*.parquet'):
-        conversation_id = file.stem
-        try:
-            df = pd.read_parquet(file, columns=['content', 'timestamp', 'role'])
-            if not df.empty:
-                user_messages = df[df['role'] == 'user']
-                if not user_messages.empty:
-                    first_message_content = user_messages['content'].iloc[0]
-                    preview = first_message_content[:40] + "..." if len(first_message_content) > 40 else first_message_content
-                else:
-                    preview = "Conversa sem prompt"
-                timestamp_iso = df['timestamp'].iloc[-1]
-                timestamp_dt = datetime.fromisoformat(timestamp_iso)
-                conversations.append({"id": conversation_id, "preview": preview, "timestamp_dt": timestamp_dt})
-        except Exception as e:
-            logging.error(f"Erro ao carregar metadados da conversa {file.name}: {e}")
+    try:
+        user_dir = get_user_specific_dir(user_id)
+        for file in user_dir.glob('*.parquet'):
+            conversation_id = file.stem
+            try:
+                df = pd.read_parquet(file, columns=['content', 'timestamp', 'role'])
+                if not df.empty:
+                    user_messages = df[df['role'] == 'user']
+                    preview = user_messages['content'].iloc[0][:40] + "..." if not user_messages.empty else "Conversa sem prompt"
+                    timestamp_dt = datetime.fromisoformat(df['timestamp'].iloc[-1])
+                    conversations.append({"id": conversation_id, "preview": preview, "timestamp_dt": timestamp_dt})
+            except Exception as e:
+                logging.error(f"Erro ao carregar metadados de {file.name} para {user_id}: {e}")
+    except Exception as e:
+        logging.error(f"Erro ao acessar diretório de conversas para {user_id}: {e}")
+
     conversations.sort(key=lambda x: x['timestamp_dt'], reverse=True)
     return conversations
 
-# --- Inicialização ---
-initialize_session_state()
+# --- Inicialização e Lógica Principal ---
+USER_ID = get_user_id()
+initialize_session_state(USER_ID)
 
 # --- Barra Lateral (Sidebar) ---
 with st.sidebar:
     st.header("⚖️ Comparador de Modelos")
+
+    if USER_ID:
+        st.success(f"Logado como: **{USER_ID}**")
+    else:
+        st.info("Você está em modo anônimo. Faça login no Streamlit para salvar suas conversas.")
 
     if st.button("Nova Conversa", use_container_width=True):
         st.session_state.conversation_id = str(uuid.uuid4())
@@ -376,42 +456,42 @@ with st.sidebar:
 
     st.divider()
 
-    # --- LÓGICA DE CONVERSAS SALVAS COM EXCLUSÃO (CORRIGIDA) ---
     with st.expander("📂 Conversas Salvas", expanded=True):
-        conversations = load_conversations_metadata() 
-        if not conversations:
-            st.caption("Nenhuma conversa salva.")
+        if not USER_ID:
+            st.caption("Faça login para ver suas conversas salvas.")
         else:
-            for conv in conversations:
-                conv_id = conv['id']
-                is_confirming_delete = (st.session_state.get('confirm_delete_id') == conv_id)
+            conversations = load_conversations_metadata(USER_ID)
+            if not conversations:
+                st.caption("Nenhuma conversa salva.")
+            else:
+                for conv in conversations:
+                    conv_id = conv['id']
+                    is_confirming_delete = (st.session_state.get('confirm_delete_id') == conv_id)
+                    col1, col2 = st.columns([0.8, 0.2])
 
-                col1, col2 = st.columns([0.8, 0.2])
-
-                with col1:
-                    if st.button(f"{conv['preview']}", key=f"load_{conv_id}", use_container_width=True, disabled=is_confirming_delete):
-                        messages, loaded_model_ids = load_conversation_messages(conv_id)
-                        if messages is not None:
-                            st.session_state.conversation_id = conv_id
-                            st.session_state.messages = messages
-                            st.session_state.selected_model_ids = loaded_model_ids if loaded_model_ids else []
-                            st.session_state.confirm_delete_id = None
-                            st.toast(f"Conversa '{conv['preview']}' carregada.", icon="📂")
-                            st.rerun()
-                
-                with col2:
-                    if is_confirming_delete:
-                        # Botões de confirmação e cancelamento (sem colunas aninhadas)
-                        if st.button("✔️", key=f"confirm_delete_{conv_id}", help="Confirmar exclusão", use_container_width=True):
-                            delete_conversation(conv_id)
-                            st.rerun()
-                        if st.button("❌", key=f"cancel_delete_{conv_id}", help="Cancelar exclusão", use_container_width=True):
-                            st.session_state.confirm_delete_id = None
-                            st.rerun()
-                    else:
-                        if st.button("🗑️", key=f"delete_{conv_id}", help="Excluir esta conversa", use_container_width=True):
-                            st.session_state.confirm_delete_id = conv_id
-                            st.rerun()
+                    with col1:
+                        if st.button(f"{conv['preview']}", key=f"load_{conv_id}", use_container_width=True, disabled=is_confirming_delete):
+                            messages, loaded_model_ids = load_conversation_messages(USER_ID, conv_id)
+                            if messages is not None:
+                                st.session_state.conversation_id = conv_id
+                                st.session_state.messages = messages
+                                st.session_state.selected_model_ids = loaded_model_ids if loaded_model_ids else []
+                                st.session_state.confirm_delete_id = None
+                                st.toast(f"Conversa '{conv['preview']}' carregada.", icon="📂")
+                                st.rerun()
+                    
+                    with col2:
+                        if is_confirming_delete:
+                            if st.button("✔️", key=f"confirm_delete_{conv_id}", help="Confirmar exclusão", use_container_width=True):
+                                delete_conversation(USER_ID, conv_id)
+                                st.rerun()
+                            if st.button("❌", key=f"cancel_delete_{conv_id}", help="Cancelar exclusão", use_container_width=True):
+                                st.session_state.confirm_delete_id = None
+                                st.rerun()
+                        else:
+                            if st.button("🗑️", key=f"delete_{conv_id}", help="Excluir esta conversa", use_container_width=True):
+                                st.session_state.confirm_delete_id = conv_id
+                                st.rerun()
     
     st.divider()
 
@@ -431,11 +511,22 @@ with st.sidebar:
 
     st.divider()
     
-    st.text_input("🔑 Chave API OpenRouter", type="password", key="api_key", help="Insira sua chave API do OpenRouter.")
+    st.session_state.api_key = st.text_input(
+        "🔑 Chave API OpenRouter", 
+        type="password", 
+        value=st.session_state.api_key, 
+        help="Insira sua chave API do OpenRouter."
+    )
+
+    if USER_ID:
+        if st.button("Salvar Chave", use_container_width=True):
+            save_api_key(USER_ID, st.session_state.api_key)
+            st.success("Chave de API salva para este usuário!")
+        st.caption("Sua chave será armazenada no servidor. Use por sua conta e risco.")
+
     if not st.session_state.api_key:
         st.warning("⚠️ Insira sua chave API para usar o chat.")
     st.markdown("[Obter chave OpenRouter](https://openrouter.ai/keys)", unsafe_allow_html=True)
-
 
 # --- Área Principal do Chat ---
 st.title("⚖️ Chat Pro: Comparador de Modelos")
@@ -443,7 +534,6 @@ st.title("⚖️ Chat Pro: Comparador de Modelos")
 model_names_str = ", ".join([MODEL_NAME_MAP.get(mid, "N/A") for mid in st.session_state.selected_model_ids])
 st.caption(f"Conversando com: **{model_names_str}**")
 
-# Exibição das mensagens
 if not st.session_state.messages:
     st.info("👋 Selecione até 3 modelos na barra lateral e digite sua mensagem abaixo para começar a comparar!")
 
@@ -462,14 +552,12 @@ for message in st.session_state.messages:
             for i, (model_id, response_text) in enumerate(content.items()):
                 with cols[i]:
                     with st.chat_message(name=MODEL_NAME_MAP.get(model_id, "Bot"), avatar="🤖"):
-                        # O nome do modelo aqui já estará limpo, pois vem do MODEL_NAME_MAP
                         st.subheader(f"Resposta de `{MODEL_NAME_MAP.get(model_id)}`")
                         st.markdown(response_text)
         else:
              with st.chat_message(name="assistant", avatar="🤖"):
                 st.markdown(content)
 
-# Entrada de Prompt do Usuário
 input_disabled = not st.session_state.api_key or not st.session_state.selected_model_ids
 prompt = st.chat_input(
     "Digite sua mensagem para todos os modelos...",
@@ -477,7 +565,6 @@ prompt = st.chat_input(
     disabled=input_disabled,
 )
 
-# --- LÓGICA DE PROCESSAMENTO CONCORRENTE ---
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.rerun()
@@ -521,7 +608,9 @@ if st.session_state.messages and st.session_state.messages[-1]['role'] == 'user'
 
     st.session_state.messages.append({"role": "assistant", "content": ordered_responses})
     
+    # Salva a conversa (a função interna verifica se o usuário está logado)
     save_conversation(
+        USER_ID,
         st.session_state.conversation_id, 
         st.session_state.messages, 
         st.session_state.selected_model_ids
@@ -531,4 +620,3 @@ if st.session_state.messages and st.session_state.messages[-1]['role'] == 'user'
         st.session_state.web_search_enabled = False
 
     st.rerun()
-
