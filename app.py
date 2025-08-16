@@ -380,7 +380,7 @@ with st.sidebar:
     valid_current_selection = [name for name in current_selection_names if name in available_model_names]
 
     selected_friendly_names = st.multiselect(
-        "",
+        #"",
         options=available_model_names,
         default=valid_current_selection,
         max_selections=3,
