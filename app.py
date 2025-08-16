@@ -545,7 +545,7 @@ if st.session_state.messages:
     file_name = f"conversa_{st.session_state.conversation_id}.txt"
 
     # Expander para visualizar e copiar
-    with st.expander("📋 Ver e copiar conversa completa", expanded=False):
+    with st.expander("📋 Ver e copiar ou baixar conversa completa", expanded=False):
         # 1) Maneira simples: o st.code já exibe um botão de copiar no canto
         st.code(transcript, language="markdown")
 
@@ -557,7 +557,7 @@ if st.session_state.messages:
 
     <div class="copy-dl-row">
       <button id="copyBtn" class="btn">📋 Copiar conversa</button>
-      <button id="downloadBtn" class="btn">⬇️ Baixar .txt</button>
+      <button id="downloadBtn" class="btn">⬇️ Baixar txt</button>
     </div>
 
     <script>
