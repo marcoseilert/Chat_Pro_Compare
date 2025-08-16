@@ -10,8 +10,9 @@ Compare responses from multiple AI models simultaneously using OpenRouter API.
 
 ## Usage
 1. Get your API key from [OpenRouter](https://openrouter.ai/keys)
-2. Select models to compare
-3. Start chatting!
+2. Update Models list
+3. Select up to 3 models to compare responses
+4. Start chatting!
 
 ## Privacy
 - No data is stored permanently
