@@ -366,7 +366,7 @@ with st.sidebar:
     st.divider()
     
     # Seleção de modelos
-    st.subheader("🤖 Model Selection")
+    st.subheader("🖥 Model Selection")
     st.caption("Select up to 3 models to compare")
     
     available_models = filter_models(
