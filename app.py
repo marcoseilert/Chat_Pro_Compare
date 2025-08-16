@@ -370,10 +370,11 @@ with st.sidebar:
     #st.caption("Select up to 3 models to compare")
     
     available_models = filter_models(
-        "",
+        "AI Model",
         st.session_state.show_free_models,
         st.session_state.show_paid_models,
-        st.session_state.selected_companies
+        st.session_state.selected_companies,
+        help="Choose up to 3 models to compare their responses"
     )
     available_model_names = [m['name'] for m in available_models]
     
