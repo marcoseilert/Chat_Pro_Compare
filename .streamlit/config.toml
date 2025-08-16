@@ -1,0 +1,46 @@
+[theme]
+# Cor primária - Azul profissional vibrante
+primaryColor = "#1976D2"
+
+# Cor de fundo principal - Cinza azulado muito claro
+backgroundColor = "#F5F7FA"
+
+# Cor de fundo secundária - Branco com leve tom azulado
+secondaryBackgroundColor = "#FFFFFF"
+
+# Cor do texto - Cinza escuro azulado
+textColor = "#1E3A5F"
+
+# Fonte base do aplicativo
+font = "sans serif"
+
+[server]
+# Configurações de performance
+maxUploadSize = 10
+maxMessageSize = 10
+
+[browser]
+# Título da aba do navegador
+gatherUsageStats = false
+
+[client]
+# Configurações do cliente
+showErrorDetails = true
+toolbarMode = "minimal"
+
+[runner]
+# Configurações de execução
+magicEnabled = true
+installTracer = false
+fixMatplotlib = true
+
+[logger]
+# Nível de log
+level = "info"
+messageFormat = "%(asctime)s %(message)s"
+
+[deprecation]
+# Mostrar avisos de deprecação
+showfileUploaderEncoding = false
+showImageFormat = false
+showPyplotGlobalUse = false
