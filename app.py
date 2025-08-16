@@ -549,59 +549,86 @@ if st.session_state.messages:
         st.code(transcript, language="markdown")
 
         # 2) Botão dedicado "Copiar conversa" (opcional)
-        components.html(
-    f"""
-    <div>
-      <button id="copyBtn"
-              style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:#f6f6f6;width:100%;">
-        📋 Copiar conversa
-      </button>
-      <script>
-        const text = {json.dumps(transcript)};  // string segura (JSON) no JS
-        const btn = document.getElementById('copyBtn');
+components.html(
+        f"""
+        <div class="copy-dl-row">
+          <button id="copyBtn" class="btn">📋 Copiar conversa</button>
+          <button id="downloadBtn" class="btn">⬇️ Baixar .txt</button>
+        </div>
 
-        async function copyText() {{
-          try {{
-            // Tentativa moderna (pode falhar em iframes/páginas não seguras)
-            await navigator.clipboard.writeText(text);
-            btn.innerText = '✅ Copiado!';
-          }} catch (e) {{
-            // Fallback clássico que costuma funcionar em iframes
+        <script>
+          const text = {json.dumps(transcript)};
+          const fileName = {json.dumps(file_name)};
+
+          const copyBtn = document.getElementById('copyBtn');
+          const downloadBtn = document.getElementById('downloadBtn');
+
+          async function copyText() {{
             try {{
-              const ta = document.createElement('textarea');
-              ta.value = text;
-              ta.setAttribute('readonly', '');
-              ta.style.position = 'fixed';
-              ta.style.top = '-1000px';
-              document.body.appendChild(ta);
-              ta.select();
-              document.execCommand('copy');
-              document.body.removeChild(ta);
-              btn.innerText = '✅ Copiado!';
-            }} catch (e2) {{
-              btn.innerText = '❌ Não foi possível copiar';
-              console.error('Clipboard error:', e, e2);
+              await navigator.clipboard.writeText(text);
+              copyBtn.textContent = '✅ Copiado!';
+            }} catch (e) {{
+              try {{
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.top = '-10000px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                copyBtn.textContent = '✅ Copiado!';
+              }} catch (e2) {{
+                copyBtn.textContent = '❌ Erro ao copiar';
+                console.error('Clipboard error:', e, e2);
+              }}
+            }} finally {{
+              setTimeout(() => copyBtn.textContent = '📋 Copiar conversa', 1500);
             }}
-          }} finally {{
-            setTimeout(() => btn.innerText = '📋 Copiar conversa', 1500);
           }}
-        }}
 
-        btn.addEventListener('click', copyText);
-      </script>
-    </div>
-    """,
-    height=60
-)
+          function downloadTxt() {{
+            const blob = new Blob([text], {{ type: 'text/plain;charset=utf-8' }});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }}
 
-        # 3) (Opcional) Botão para baixar .txt
-        st.download_button(
-            "⬇️ Baixar conversa (txt)",
-            data=transcript,
-            file_name=f"conversa_{st.session_state.conversation_id}.txt",
-            mime="text/plain"
-        )       
-        
+          copyBtn.addEventListener('click', copyText);
+          downloadBtn.addEventListener('click', downloadTxt);
+        </script>
+
+        <style>
+          .copy-dl-row {{
+            display: flex;
+            gap: 10px;
+            width: 100%;
+          }}
+          .btn {{
+            flex: 1;
+            padding: 10px 12px;
+            min-height: 40px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #f6f6f6;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1;
+            text-align: center;
+          }}
+          .btn:active {{ transform: translateY(1px); }}
+        </style>
+        """,
+        height=80
+    )
+
 # Input de chat
 input_disabled = not st.session_state.api_key or not st.session_state.selected_model_ids
 
