@@ -419,6 +419,7 @@ with st.sidebar:
                 st.toast("Model list refreshed!", icon="✅")
                 st.rerun()
 
+    st.divider()
     
     # Conversas salvas (em memória)
     with st.expander("💾 Saved Conversations", expanded=False):
