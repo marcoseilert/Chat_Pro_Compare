@@ -550,14 +550,49 @@ if st.session_state.messages:
 
         # 2) Botão dedicado "Copiar conversa" (opcional)
         components.html(
-            f"""
-            <button onclick="navigator.clipboard.writeText({json.dumps(transcript)})"
-                    style="margin-top:8px;padding:8px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:#f6f6f6;">
-                Copiar conversa
-            </button>
-            """,
-            height=60
-        )
+    f"""
+    <div>
+      <button id="copyBtn"
+              style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:#f6f6f6;width:100%;">
+        📋 Copiar conversa
+      </button>
+      <script>
+        const text = {json.dumps(transcript)};  // string segura (JSON) no JS
+        const btn = document.getElementById('copyBtn');
+
+        async function copyText() {{
+          try {{
+            // Tentativa moderna (pode falhar em iframes/páginas não seguras)
+            await navigator.clipboard.writeText(text);
+            btn.innerText = '✅ Copiado!';
+          }} catch (e) {{
+            // Fallback clássico que costuma funcionar em iframes
+            try {{
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.setAttribute('readonly', '');
+              ta.style.position = 'fixed';
+              ta.style.top = '-1000px';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              btn.innerText = '✅ Copiado!';
+            }} catch (e2) {{
+              btn.innerText = '❌ Não foi possível copiar';
+              console.error('Clipboard error:', e, e2);
+            }}
+          }} finally {{
+            setTimeout(() => btn.innerText = '📋 Copiar conversa', 1500);
+          }}
+        }}
+
+        btn.addEventListener('click', copyText);
+      </script>
+    </div>
+    """,
+    height=60
+)
 
         # 3) (Opcional) Botão para baixar .txt
         st.download_button(
