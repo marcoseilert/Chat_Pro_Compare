@@ -362,7 +362,7 @@ with st.sidebar:
 
    
     st.session_state.selected_companies = st.multiselect(
-        "Companies", 
+        "Select up to 3 Companies", 
         options=available_companies, 
         default=st.session_state.selected_companies,
         help="Select AI companies to show their models"
@@ -379,7 +379,7 @@ with st.sidebar:
     valid_current_selection = [name for name in current_selection_names if name in available_model_names]
 
     selected_friendly_names = st.multiselect(
-        "Models",
+        "Select up to 3 LLMs",
         options=available_model_names,
         default=valid_current_selection,
         max_selections=3,
