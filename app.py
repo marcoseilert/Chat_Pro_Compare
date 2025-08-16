@@ -324,7 +324,7 @@ def build_full_transcript(messages: list, model_name_map: dict) -> str:
                 # Mantém a ordem dos modelos conforme foram adicionados
                 for mid, text in content.items():
                     name = model_name_map.get(mid, mid)
-                    lines.append(f"[{i}] Assistente ({name}):\n{str(text).strip()}")
+                    lines.append(f"[{i}] Assistente ({name}):\n{str(text).strip()}\n")
             else:
                 lines.append(f"[{i}] Assistente:\n{str(content).strip()}")
         lines.append("")  # linha em branco entre mensagens
