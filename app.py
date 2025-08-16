@@ -370,19 +370,17 @@ with st.sidebar:
     #st.caption("Select up to 3 models to compare")
     
     available_models = filter_models(
-        "AI Model",
         st.session_state.show_free_models,
         st.session_state.show_paid_models,
-        st.session_state.selected_companies,
-        help="Choose up to 3 models to compare their responses"
+        st.session_state.selected_companies
     )
     available_model_names = [m['name'] for m in available_models]
-    
+  
     current_selection_names = [MODEL_NAME_MAP.get(mid) for mid in st.session_state.selected_model_ids if mid in MODEL_NAME_MAP]
     valid_current_selection = [name for name in current_selection_names if name in available_model_names]
 
     selected_friendly_names = st.multiselect(
-        #"AI Models",
+        "AI Models",
         options=available_model_names,
         default=valid_current_selection,
         max_selections=3,
