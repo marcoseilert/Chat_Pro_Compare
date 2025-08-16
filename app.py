@@ -483,7 +483,7 @@ if not st.session_state.messages:
     This tool lets you compare responses from different AI models simultaneously.
     
     **Quick Start:**
-    1. Add your OpenRouter API key in the sidebar
+    1. Add your [OpenRouter API key](https://openrouter.ai/keys) in the sidebar
     2. Refresh Models list 
     3. Select up to 3 models to compare responses
     3. Type your message below
