@@ -540,7 +540,7 @@ for message in st.session_state.messages:
                 
 # --- Copiar conversa atual ---
 if st.session_state.messages:
-    #transcript = build_full_transcript(st.session_state.messages, MODEL_NAME_MAP)
+    transcript = build_full_transcript(st.session_state.messages, MODEL_NAME_MAP)
 
     # Expander para visualizar e copiar
     with st.expander("📋 Ver e copiar conversa completa", expanded=False):
