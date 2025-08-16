@@ -87,7 +87,7 @@ def fetch_and_classify_models() -> tuple[list | None, list | None]:
     free_models_data.sort(key=lambda item: item['created'], reverse=True)
     paid_models_data.sort(key=lambda item: item['created'], reverse=True)
   
-    return free_models_data[:30], paid_models_data[:30]  # Limitar quantidade para performance
+    return free_models_data, paid_models_data
 
 def ordenar_empresas(empresas: list[str]) -> list[str]:
     """Ordena empresas por relevância em IA."""
@@ -113,8 +113,8 @@ def load_models():
     try:
         new_free, new_paid = fetch_and_classify_models()
         if new_free and new_paid:
-            free_models = new_free[:50]  # Limitar para não sobrecarregar
-            paid_models = new_paid[:50]
+            free_models = new_free  # Limitar para não sobrecarregar
+            paid_models = new_paid
     except:
         pass  # Usar modelos padrão se API falhar
     
