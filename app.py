@@ -367,7 +367,7 @@ with st.sidebar:
     
     # Seleção de modelos
     st.subheader("🖥 Model Selection")
-    st.caption("Select up to 3 models to compare")
+    #st.caption("Select up to 3 models to compare", help="Choose up to 3 models to compare their responses")
     
     available_models = filter_models(
         st.session_state.show_free_models,
@@ -380,7 +380,7 @@ with st.sidebar:
     valid_current_selection = [name for name in current_selection_names if name in available_model_names]
 
     selected_friendly_names = st.multiselect(
-        "AI Models",
+        #"AI Models",
         options=available_model_names,
         default=valid_current_selection,
         max_selections=3,
