@@ -87,11 +87,11 @@ def fetch_and_classify_models() -> tuple[list | None, list | None]:
     free_models_data.sort(key=lambda item: item['created'], reverse=True)
     paid_models_data.sort(key=lambda item: item['created'], reverse=True)
   
-    return free_models_data[:20], paid_models_data[:30]  # Limitar quantidade para performance
+    return free_models_data[:30], paid_models_data[:30]  # Limitar quantidade para performance
 
 def ordenar_empresas(empresas: list[str]) -> list[str]:
     """Ordena empresas por relevância em IA."""
-    principais_em_ia = ["Google", "OpenAI", "xAI", "Anthropic", "Meta", "DeepSeek", "Mistral", "Cohere", "AI21", "Perplexity"]
+    principais_em_ia = ["Google", "OpenAI", "xAI", "Anthropic", "Qwen", "DeepSeek", "Perplexity", "Meta"]
     empresas = list(dict.fromkeys(empresas))
     top = [e for e in principais_em_ia if e in empresas]
     resto = sorted([e for e in empresas if e not in principais_em_ia])
@@ -113,8 +113,8 @@ def load_models():
     try:
         new_free, new_paid = fetch_and_classify_models()
         if new_free and new_paid:
-            free_models = new_free[:10]  # Limitar para não sobrecarregar
-            paid_models = new_paid[:15]
+            free_models = new_free[:50]  # Limitar para não sobrecarregar
+            paid_models = new_paid[:50]
     except:
         pass  # Usar modelos padrão se API falhar
     
@@ -241,7 +241,7 @@ def call_openrouter_api(model_id: str, api_key: str, conversation_history: list,
     payload = {
         "model": effective_model_id, 
         "messages": api_messages, 
-        "max_tokens": 2048,  # Reduzido para apps públicos
+        "max_tokens": 8048,  # Reduzido para apps públicos
         "temperature": 0.7, 
         "top_p": 0.9
     }
@@ -589,4 +589,4 @@ if st.session_state.messages and st.session_state.messages[-1]['role'] == 'user'
 
 # Footer
 st.divider()
-st.caption("Built with ❤️ By [Marcos Eilert](https://www.linkedin.com/in/marcos-eilert-%F0%9F%92%B9%F0%9F%93%88%F0%9F%93%8A-61b66722/) using Streamlit | Powered by [OpenRouter](https://openrouter.ai)")
+st.caption("Built with AI 🤖 By [Marcos Eilert](https://www.linkedin.com/in/marcos-eilert-%F0%9F%92%B9%F0%9F%93%88%F0%9F%93%8A-61b66722/) using Streamlit | Powered by [OpenRouter](https://openrouter.ai)")
