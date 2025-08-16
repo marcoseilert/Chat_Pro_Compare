@@ -412,8 +412,8 @@ with st.sidebar:
     st.divider()
 
     # Botão para atualizar modelos
-    with st.expander("🔧 Advanced Options"):
-        if st.button("🔄 Refresh Model List", use_container_width=True):
+    with st.expander("🔧 Refresh Model List"):
+        if st.button("🔄 Refresh", use_container_width=True):
             with st.spinner("Fetching latest models..."):
                 st.cache_data.clear()
                 st.toast("Model list refreshed!", icon="✅")
