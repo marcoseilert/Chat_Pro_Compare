@@ -490,7 +490,8 @@ if not st.session_state.messages:
     
     **Quick Start:**
     1. Add your OpenRouter API key in the sidebar
-    2. Select up to 3 models to compare
+    2. Refresh Models list 
+    3. Select up to 3 models to compare responses
     3. Type your message below
     4. See how different models respond to the same prompt!
     
