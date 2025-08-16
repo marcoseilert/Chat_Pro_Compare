@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Configuração da página
 st.set_page_config(
     page_title="AI Model Comparator - Multi-Model Chat",
-    page_icon="⚖️",
+    page_icon="🖥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -313,7 +313,7 @@ initialize_session_state()
 
 # --- Barra Lateral ---
 with st.sidebar:
-    st.header("⚖️ AI Model Comparator")
+    st.header("🖥 AI Model Comparator")
     
     # Informações sobre o app
     with st.expander("ℹ️ About this App", expanded=False):
@@ -464,7 +464,7 @@ with st.sidebar:
     
 
 # --- Área Principal do Chat ---
-st.title("⚖️ AI Model Comparator")
+st.title("🖥 AI Model Comparator")
 st.caption("Compare responses from multiple AI models side by side")
 
 # Mostrar modelos selecionados
