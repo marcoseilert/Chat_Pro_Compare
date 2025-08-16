@@ -332,7 +332,8 @@ with st.sidebar:
         
         **How to use:**
         1. Get your [OpenRouter API key](https://openrouter.ai/keys)
-        2. Select up to 3 models to compare
+        2. Refresh Models list
+        3. Select up to 3 models to compare
         3. Type your message and see responses side by side
         
         **Note:** This is a community app. Your API key is only used for this session and is not stored.
