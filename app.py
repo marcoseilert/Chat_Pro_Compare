@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Configuração da página
 st.set_page_config(
-    page_title="AI Model Comparator - Multi-Model Chat",
+    page_title="LLM Comparator - Multi-Model Chat",
     page_icon="🖥",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -219,7 +219,7 @@ def call_openrouter_api(model_id: str, api_key: str, conversation_history: list,
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://share.streamlit.io",
-        "X-Title": "AI Model Comparator"
+        "X-Title": "LLMs Comparator"
     }
   
     api_messages = []
@@ -313,12 +313,12 @@ initialize_session_state()
 
 # --- Barra Lateral ---
 with st.sidebar:
-    st.header("🖥 AI Model Comparator")
+    st.header("🖥 LLMs Comparator")
     
     # Informações sobre o app
     with st.expander("ℹ️ About this App", expanded=False):
         st.markdown("""
-        **AI Model Comparator** allows you to:
+        **LLMs Comparator** allows you to:
         - Compare responses from multiple AI models simultaneously
         - Test different models with the same prompt
         - Save conversations in your browser session
@@ -464,7 +464,7 @@ with st.sidebar:
     
 
 # --- Área Principal do Chat ---
-st.title("🖥 AI Model Comparator")
+st.title("🖥 LLMs Comparator")
 st.caption("Compare responses from multiple AI models side by side")
 
 # Mostrar modelos selecionados
@@ -478,7 +478,7 @@ else:
 if not st.session_state.messages:
     # Welcome message
     st.markdown("""
-    ### 👋 Welcome to AI Model Comparator!
+    ### 👋 Welcome to LLMs Comparator!
     
     This tool lets you compare responses from different AI models simultaneously.
     
