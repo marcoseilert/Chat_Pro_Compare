@@ -346,7 +346,7 @@ with st.sidebar:
     
     # Filtros de modelos
     st.subheader("🖥 Model Selection")
-    st.caption("Select up to 3 models to compare")
+    #st.caption("Select up to 3 models to compare")
     
     col_f1, col_f2 = st.columns(2)
     st.session_state.show_free_models = col_f1.checkbox("Free", value=st.session_state.show_free_models)
