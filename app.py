@@ -540,27 +540,32 @@ for message in st.session_state.messages:
                 
 # --- Copiar conversa atual ---
 if st.session_state.messages:
-    transcript = build_full_transcript(st.session_state.messages, MODEL_NAME_MAP)
+    #transcript = build_full_transcript(st.session_state.messages, MODEL_NAME_MAP)
 
-    col1, col2 = st.columns(2)
-    with col1:
+    # Expander para visualizar e copiar
+    with st.expander("📋 Ver e copiar conversa completa", expanded=False):
+        # 1) Maneira simples: o st.code já exibe um botão de copiar no canto
+        #st.code(transcript, language="markdown")
+
+        # 2) Botão dedicado "Copiar conversa" (opcional)
         components.html(
             f"""
-            <button onclick="navigator.clipboard.writeText({json.dumps(transcript)}); this.innerText='✅ Copiado!'; setTimeout(()=>this.innerText='📋 Copiar conversa', 1200);"
-                    style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:#f6f6f6;width:100%;">
-                📋 Copiar conversa
+            <button onclick="navigator.clipboard.writeText({json.dumps(transcript)})"
+                    style="margin-top:8px;padding:8px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:#f6f6f6;">
+                Copiar conversa
             </button>
             """,
-            height=48
+            height=60
         )
-    with col2:
+
+        # 3) (Opcional) Botão para baixar .txt
         st.download_button(
-            "⬇️ Baixar.txt",
+            "Baixar conversa (txt)",
             data=transcript,
             file_name=f"conversa_{st.session_state.conversation_id}.txt",
-            mime="text/plain",
-            use_container_width=True
-        )        
+            mime="text/plain"
+        )       
+        
 # Input de chat
 input_disabled = not st.session_state.api_key or not st.session_state.selected_model_ids
 
