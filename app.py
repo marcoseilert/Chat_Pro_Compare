@@ -355,20 +355,18 @@ with st.sidebar:
 
     temp_models = filter_models(True, True, ALL_COMPANIES)
     available_companies = ordenar_empresas(list(set(m['company'] for m in temp_models)))
-    
+   
+    # Seleção de modelos
+    st.subheader("🖥 Model Selection")
+    st.caption("Select up to 3 models to compare")
+   
     st.session_state.selected_companies = st.multiselect(
         "Companies", 
         options=available_companies, 
         default=st.session_state.selected_companies,
         help="Select AI companies to show their models"
     )
-
-    st.divider()
-    
-    # Seleção de modelos
-    st.subheader("🖥 Model Selection")
-    #st.caption("Select up to 3 models to compare")
-    
+   
     available_models = filter_models(
         st.session_state.show_free_models,
         st.session_state.show_paid_models,
@@ -380,7 +378,7 @@ with st.sidebar:
     valid_current_selection = [name for name in current_selection_names if name in available_model_names]
 
     selected_friendly_names = st.multiselect(
-        "",
+        "Models",
         options=available_model_names,
         default=valid_current_selection,
         max_selections=3,
