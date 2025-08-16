@@ -345,7 +345,9 @@ with st.sidebar:
     st.divider()
     
     # Filtros de modelos
-    st.subheader("🎯 Model Filters")
+    st.subheader("🖥 Model Selection")
+    st.caption("Select up to 3 models to compare")
+    
     col_f1, col_f2 = st.columns(2)
     st.session_state.show_free_models = col_f1.checkbox("Free", value=st.session_state.show_free_models)
     st.session_state.show_paid_models = col_f2.checkbox("Paid", value=st.session_state.show_paid_models)
@@ -357,8 +359,7 @@ with st.sidebar:
     available_companies = ordenar_empresas(list(set(m['company'] for m in temp_models)))
    
     # Seleção de modelos
-    st.subheader("🖥 Model Selection")
-    st.caption("Select up to 3 models to compare")
+
    
     st.session_state.selected_companies = st.multiselect(
         "Companies", 
