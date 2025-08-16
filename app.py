@@ -384,8 +384,8 @@ with st.sidebar:
         options=available_model_names,
         default=valid_current_selection,
         max_selections=3,
-        key="model_selector",
-        help="Choose up to 3 models to compare their responses"
+        key="model_selector"
+        #,help="Choose up to 3 models to compare their responses"
     )
     
     st.session_state.selected_model_ids = [MODEL_ID_MAP[name] for name in selected_friendly_names if name in MODEL_ID_MAP]
