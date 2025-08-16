@@ -551,84 +551,90 @@ if st.session_state.messages:
 
         # 2) Botão dedicado "Copiar conversa" (opcional)
         components.html(
-        f"""
-        <div class="copy-dl-row">
-          <button id="copyBtn" class="btn">📋 Copiar conversa</button>
-          <button id="downloadBtn" class="btn">⬇️ Baixar .txt</button>
-        </div>
+    f"""
+    <!-- Carrega a fonte Inter (ou troque por outra) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-        <script>
-          const text = {json.dumps(transcript)};
-          const fileName = {json.dumps(file_name)};
+    <div class="copy-dl-row">
+      <button id="copyBtn" class="btn">📋 Copiar conversa</button>
+      <button id="downloadBtn" class="btn">⬇️ Baixar .txt</button>
+    </div>
 
-          const copyBtn = document.getElementById('copyBtn');
-          const downloadBtn = document.getElementById('downloadBtn');
+    <script>
+      const text = {json.dumps(transcript)};
+      const fileName = {json.dumps(file_name)};
 
-          async function copyText() {{
-            try {{
-              await navigator.clipboard.writeText(text);
-              copyBtn.textContent = '✅ Copiado!';
-            }} catch (e) {{
-              try {{
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                ta.setAttribute('readonly', '');
-                ta.style.position = 'fixed';
-                ta.style.top = '-10000px';
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                copyBtn.textContent = '✅ Copiado!';
-              }} catch (e2) {{
-                copyBtn.textContent = '❌ Erro ao copiar';
-                console.error('Clipboard error:', e, e2);
-              }}
-            }} finally {{
-              setTimeout(() => copyBtn.textContent = '📋 Copiar conversa', 1500);
-            }}
+      const copyBtn = document.getElementById('copyBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      async function copyText() {{
+        try {{
+          await navigator.clipboard.writeText(text);
+          copyBtn.textContent = '✅ Copiado!';
+        }} catch (e) {{
+          try {{
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '-10000px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            copyBtn.textContent = '✅ Copiado!';
+          }} catch (e2) {{
+            copyBtn.textContent = '❌ Erro ao copiar';
+            console.error('Clipboard error:', e, e2);
           }}
+        }} finally {{
+          setTimeout(() => copyBtn.textContent = '📋 Copiar conversa', 1500);
+        }}
+      }}
 
-          function downloadTxt() {{
-            const blob = new Blob([text], {{ type: 'text/plain;charset=utf-8' }});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }}
+      function downloadTxt() {{
+        const blob = new Blob([text], {{ type: 'text/plain;charset=utf-8' }});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }}
 
-          copyBtn.addEventListener('click', copyText);
-          downloadBtn.addEventListener('click', downloadTxt);
-        </script>
+      copyBtn.addEventListener('click', copyText);
+      downloadBtn.addEventListener('click', downloadTxt);
+    </script>
 
-        <style>
-          .copy-dl-row {{
-            display: flex;
-            gap: 10px;
-            width: 100%;
-          }}
-          .btn {{
-            flex: 1;
-            padding: 10px 12px;
-            min-height: 40px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            background: #f6f6f6;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 14px;
-            line-height: 1;
-            text-align: center;
-          }}
-          .btn:active {{ transform: translateY(1px); }}
-        </style>
-        """,
-        height=80
-    )
+    <style>
+      .copy-dl-row {{
+        display: flex;
+        gap: 10px;
+        width: 100%;
+      }}
+      .btn {{
+        flex: 1;
+        padding: 10px 12px;
+        min-height: 40px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: #f6f6f6;
+        cursor: pointer;
+        /* Fonte dos botões: */
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        font-size: 14px;     /* ajuste aqui */
+        font-weight: 600;    /* 400, 500, 600... */
+        letter-spacing: 0.2px;
+        line-height: 1;
+        text-align: center;
+      }}
+      .btn:active {{ transform: translateY(1px); }}
+    </style>
+    """,
+    height=80
+)
 
 # Input de chat
 input_disabled = not st.session_state.api_key or not st.session_state.selected_model_ids
