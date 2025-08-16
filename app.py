@@ -411,6 +411,15 @@ with st.sidebar:
 
     st.divider()
 
+    # Botão para atualizar modelos
+    with st.expander("🔧 Advanced Options"):
+        if st.button("🔄 Refresh Model List", use_container_width=True):
+            with st.spinner("Fetching latest models..."):
+                st.cache_data.clear()
+                st.toast("Model list refreshed!", icon="✅")
+                st.rerun()
+
+    
     # Conversas salvas (em memória)
     with st.expander("💾 Saved Conversations", expanded=False):
         if not st.session_state.saved_conversations:
@@ -458,13 +467,6 @@ with st.sidebar:
         st.info("👉 [Get your OpenRouter API key](https://openrouter.ai/keys)")
         st.warning("⚠️ You need an API key to use this app")
     
-    # Botão para atualizar modelos
-    with st.expander("🔧 Advanced Options"):
-        if st.button("🔄 Refresh Model List", use_container_width=True):
-            with st.spinner("Fetching latest models..."):
-                st.cache_data.clear()
-                st.toast("Model list refreshed!", icon="✅")
-                st.rerun()
 
 # --- Área Principal do Chat ---
 st.title("⚖️ AI Model Comparator")
