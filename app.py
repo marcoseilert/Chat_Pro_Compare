@@ -10,6 +10,7 @@ import re
 import threading
 import hashlib
 import os
+import streamlit.components.v1 as components
 
 # --- Configuração Inicial ---
 
@@ -308,6 +309,27 @@ def delete_conversation_from_memory(conversation_id: str):
         st.session_state.messages = []
         st.session_state.conversation_id = str(uuid.uuid4())
 
+def build_full_transcript(messages: list, model_name_map: dict) -> str:
+    """Gera a conversa completa em texto plano, pronta para copiar."""
+    if not messages:
+        return "Sem mensagens."
+    lines = [f"Conversa ID: {st.session_state.conversation_id}", ""]
+    for i, msg in enumerate(messages, 1):
+        role = msg.get("role")
+        content = msg.get("content")
+        if role == "user":
+            lines.append(f"[{i}] Usuário:\n{str(content).strip()}")
+        elif role == "assistant":
+            if isinstance(content, dict):
+                # Mantém a ordem dos modelos conforme foram adicionados
+                for mid, text in content.items():
+                    name = model_name_map.get(mid, mid)
+                    lines.append(f"[{i}] Assistente ({name}):\n{str(text).strip()}")
+            else:
+                lines.append(f"[{i}] Assistente:\n{str(content).strip()}")
+        lines.append("")  # linha em branco entre mensagens
+    return "\n".join(lines).strip()
+    
 # --- Inicialização ---
 initialize_session_state()
 
@@ -515,7 +537,34 @@ for message in st.session_state.messages:
         else:
             with st.chat_message(name="assistant", avatar="🤖"):
                 st.markdown(content)
+# --- Copiar conversa atual ---
+if st.session_state.messages:
+    transcript = build_full_transcript(st.session_state.messages, MODEL_NAME_MAP)
 
+    # Expander para visualizar e copiar
+    with st.expander("📋 Ver e copiar conversa completa", expanded=False):
+        # 1) Maneira simples: o st.code já exibe um botão de copiar no canto
+        st.code(transcript, language="markdown")
+
+        # 2) Botão dedicado "Copiar conversa" (opcional)
+        components.html(
+            f"""
+            <button onclick="navigator.clipboard.writeText({json.dumps(transcript)})"
+                    style="margin-top:8px;padding:8px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:#f6f6f6;">
+                Copiar conversa
+            </button>
+            """,
+            height=60
+        )
+
+        # 3) (Opcional) Botão para baixar .txt
+        st.download_button(
+            "Baixar .txt",
+            data=transcript,
+            file_name=f"conversa_{st.session_state.conversation_id}.txt",
+            mime="text/plain"
+        )
+        
 # Input de chat
 input_disabled = not st.session_state.api_key or not st.session_state.selected_model_ids
 
