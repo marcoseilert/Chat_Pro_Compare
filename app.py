@@ -313,7 +313,8 @@ def build_full_transcript(messages: list, model_name_map: dict) -> str:
     """Gera a conversa completa em texto plano, pronta para copiar."""
     if not messages:
         return "Sem mensagens."
-    lines = [f"Conversa ID: {st.session_state.conversation_id}", ""]
+    #lines = [f"Conversa ID: {st.session_state.conversation_id}", ""]
+    lines = [f"", ""]
     for i, msg in enumerate(messages, 1):
         role = msg.get("role")
         content = msg.get("content")
