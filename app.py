@@ -348,19 +348,10 @@ with st.sidebar:
     st.subheader("🖥 Model Selection")
     #st.caption("Select up to 3 models to compare")
     
-    col_f1, col_f2 = st.columns(2)
-    st.session_state.show_free_models = col_f1.checkbox("Free", value=st.session_state.show_free_models)
-    st.session_state.show_paid_models = col_f2.checkbox("Paid", value=st.session_state.show_paid_models)
-    
-    if st.session_state.show_paid_models:
-        st.caption("⚠️ Paid models require credits in your OpenRouter account")
-
     temp_models = filter_models(True, True, ALL_COMPANIES)
     available_companies = ordenar_empresas(list(set(m['company'] for m in temp_models)))
    
-    # Seleção de modelos
-
-   
+    # Seleção de modelos  
     st.session_state.selected_companies = st.multiselect(
         "Select up to 3 Companies", 
         options=available_companies, 
@@ -392,6 +383,14 @@ with st.sidebar:
     if not st.session_state.selected_model_ids:
         st.warning("⚠️ Please select at least one model")
 
+    col_f1, col_f2 = st.columns(2)
+    st.session_state.show_free_models = col_f1.checkbox("Free", value=st.session_state.show_free_models)
+    st.session_state.show_paid_models = col_f2.checkbox("Paid", value=st.session_state.show_paid_models)
+    
+    if st.session_state.show_paid_models:
+        st.caption("⚠️ Paid models require credits in your OpenRouter account")
+
+    
     st.divider()
 
     # Web search toggle
