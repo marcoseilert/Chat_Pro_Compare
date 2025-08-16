@@ -542,6 +542,7 @@ for message in st.session_state.messages:
 # --- Copiar conversa atual ---
 if st.session_state.messages:
     transcript = build_full_transcript(st.session_state.messages, MODEL_NAME_MAP)
+    file_name = f"conversa_{st.session_state.conversation_id}.txt"
 
     # Expander para visualizar e copiar
     with st.expander("📋 Ver e copiar conversa completa", expanded=False):
@@ -549,7 +550,7 @@ if st.session_state.messages:
         st.code(transcript, language="markdown")
 
         # 2) Botão dedicado "Copiar conversa" (opcional)
-components.html(
+        components.html(
         f"""
         <div class="copy-dl-row">
           <button id="copyBtn" class="btn">📋 Copiar conversa</button>
