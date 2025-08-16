@@ -589,4 +589,4 @@ if st.session_state.messages and st.session_state.messages[-1]['role'] == 'user'
 
 # Footer
 st.divider()
-st.caption("Built with ❤️ using Streamlit | Powered by [OpenRouter](https://openrouter.ai)")
+st.caption("Built with ❤️ By [Marcos](https://www.linkedin.com/in/marcos-eilert-%F0%9F%92%B9%F0%9F%93%88%F0%9F%93%8A-61b66722/) Eilert using Streamlit | Powered by [OpenRouter](https://openrouter.ai)")
