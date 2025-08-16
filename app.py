@@ -367,9 +367,10 @@ with st.sidebar:
     
     # Seleção de modelos
     st.subheader("🖥 Model Selection")
-    #st.caption("Select up to 3 models to compare", help="Choose up to 3 models to compare their responses")
+    #st.caption("Select up to 3 models to compare")
     
     available_models = filter_models(
+        "",
         st.session_state.show_free_models,
         st.session_state.show_paid_models,
         st.session_state.selected_companies
