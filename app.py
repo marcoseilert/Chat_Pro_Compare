@@ -43,17 +43,10 @@ def get_session_id() -> str:
 def get_initial_models():
     """Retorna uma estrutura de modelos padrão."""
     initial_free = [
-        {'id': 'google/gemini-flash-1.5', 'name': 'Google: Gemini Flash 1.5', 'company': 'Google'},
-        {'id': 'meta-llama/llama-3-8b-instruct:free', 'name': 'Meta: Llama 3 8B Instruct (Free)', 'company': 'Meta'},
-        {'id': 'microsoft/wizardlm-2-8x22b', 'name': 'Microsoft: WizardLM-2 8x22B', 'company': 'Microsoft'},
-        {'id': 'openai/gpt-4o-mini', 'name': 'OpenAI: GPT-4o Mini', 'company': 'OpenAI'}
+        {'id': 'qwen/qwen3-235b-a22b:free', 'name': 'Qwen3-235b-a22b', 'company': 'Qwen'},
     ]
     initial_paid = [
-        {'id': 'anthropic/claude-3.5-sonnet', 'name': 'Anthropic: Claude 3.5 Sonnet', 'company': 'Anthropic'},
-        {'id': 'openai/gpt-4o', 'name': 'OpenAI: GPT-4o', 'company': 'OpenAI'},
-        {'id': 'google/gemini-1.5-pro', 'name': 'Google: Gemini 1.5 Pro', 'company': 'Google'},
-        {'id': 'deepseek/deepseek-chat', 'name': 'DeepSeek: DeepSeek Chat', 'company': 'DeepSeek'},
-        {'id': 'x-ai/grok-2', 'name': 'xAI: Grok 2', 'company': 'xAI'}
+        {'id': 'google/gemini-2.5-flash', 'name': 'Gemini 2.5 Flash', 'company': 'Google'},
     ]
     return initial_free, initial_paid
 
